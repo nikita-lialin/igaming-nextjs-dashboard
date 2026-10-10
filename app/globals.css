@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +12,65 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* --- Анимации слота ---------------------------------------------------- */
+
+/*
+ * Лента барабана — колонка квадратных ячеек, высота ячейки = высоте окна.
+ * translateY в процентах считается от высоты САМОЙ ленты.
+ */
+
+/* Вращение: лента (2 одинаковые копии по 12 символов) бежит СВЕРХУ ВНИЗ.
+   Сдвиг на половину ленты = ровно один круг, поэтому цикл бесшовный. */
+@keyframes reel-spin {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+
+/* Остановка: лента [запас, ИТОГ, f1, f2, f3] (5 ячеек, 1 ячейка = 20%).
+   Едет вниз с замедлением, чуть «перелетает» итоговый символ и пружинит назад. */
+@keyframes reel-settle {
+  0%   { transform: translateY(-60%);  animation-timing-function: cubic-bezier(0.2, 0.75, 0.3, 1); }
+  68%  { transform: translateY(3%);    animation-timing-function: ease-in-out; }
+  84%  { transform: translateY(-1.2%); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.reel-spin {
+  animation: reel-spin var(--reel-duration, 0.6s) linear infinite;
+  /* Вертикальное размытие: SVG-фильтр с stdDeviation="0 N" (определён в SlotMachine) */
+  filter: url(#reel-vblur);
+  will-change: transform;
+}
+
+.reel-settle {
+  animation: reel-settle 750ms both;
+  will-change: transform;
+}
+
+/* Затухание символов у верхнего и нижнего края окна, пока барабан крутится */
+.reel-window-spinning {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.row-in {
+  animation: row-in 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-spin,
+  .reel-settle,
+  .row-in {
+    animation: none;
+  }
 }
